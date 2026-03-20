@@ -40,6 +40,22 @@ npm run build
 npm test
 ```
 
+## Docker
+
+Build the image:
+
+```bash
+docker build -t caldav-mcp .
+```
+
+Run the container:
+
+```bash
+docker run --rm -p 3000:3000 --env-file .env caldav-mcp
+```
+
+The server listens on port `3000` in the container.
+
 ## MCP Tools
 
 - `caldav_discover_principal`
