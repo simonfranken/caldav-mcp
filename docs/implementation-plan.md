@@ -28,7 +28,7 @@
 
 ## 3) Principal and Auth Strategy
 
-- Configure host: `https://mail.simon-franken.de/SOGo/dav`
+- Configure host: `<your-caldav-base-url>`
 - Do not hardcode principal identity; resolve dynamically for each authenticated request.
 - Per request:
   1. Forward allowlisted auth headers (`Authorization`; optional `Cookie` behind config)
