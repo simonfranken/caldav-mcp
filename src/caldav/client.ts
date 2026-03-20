@@ -110,16 +110,14 @@ export class CaldavClient {
         if (!ok) {
           return undefined;
         }
-        const resourceType = String(ok.props.resourcetype ?? "");
-        if (!resourceType.toLowerCase().includes("calendar")) {
+        if (!hasDavNode(ok.props.resourcetype, "calendar")) {
           return undefined;
         }
 
-        const displayName = String(ok.props.displayname ?? normalizeIdFromHref(href));
+        const displayName = toDavText(ok.props.displayname) ?? normalizeIdFromHref(href);
         const etag = normalizeEtag(ok.props.getetag);
-        const writable = String(ok.props["current-user-privilege-set"] ?? "").toLowerCase().includes("write");
-        const componentsRaw = String(ok.props["supported-calendar-component-set"] ?? "");
-        const components = ["VEVENT", "VTODO", "VJOURNAL"].filter((component) => componentsRaw.includes(component));
+        const writable = hasDavNode(ok.props["current-user-privilege-set"], "write");
+        const components = ["VEVENT", "VTODO", "VJOURNAL"].filter((component) => hasDavNode(ok.props["supported-calendar-component-set"], component));
 
         const calendar: CalendarInfo = {
           id: normalizeIdFromHref(href),
@@ -390,4 +388,54 @@ function normalizeEtag(input: unknown): string | undefined {
     return undefined;
   }
   return String(input).trim();
+}
+
+export function hasDavNode(value: unknown, nodeName: string): boolean {
+  const target = nodeName.toLowerCase();
+  if (value === null || value === undefined) {
+    return false;
+  }
+  if (typeof value === "string") {
+    return value.toLowerCase().includes(target);
+  }
+  if (Array.isArray(value)) {
+    return value.some((item) => hasDavNode(item, nodeName));
+  }
+  if (typeof value === "object") {
+    return Object.entries(value).some(([key, child]) => {
+      if (key.toLowerCase() === target) {
+        return true;
+      }
+      return hasDavNode(child, nodeName);
+    });
+  }
+  return false;
+}
+
+export function toDavText(value: unknown): string | undefined {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const text = toDavText(item);
+      if (text) {
+        return text;
+      }
+    }
+    return undefined;
+  }
+  if (typeof value === "object") {
+    for (const child of Object.values(value)) {
+      const text = toDavText(child);
+      if (text) {
+        return text;
+      }
+    }
+  }
+  return undefined;
 }
